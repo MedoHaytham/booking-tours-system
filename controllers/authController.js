@@ -10,16 +10,15 @@ const signToken = id => jwt.sign({ id }, process.env.JWT_SECRET, {
   expiresIn: process.env.JWT_EXPIRES_IN
 });
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
-  const cookieOptions = {
+  res.cookie('jwt', token, {
     expires: new Date( 
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true
-  }
-  if ( process.env.NODE_ENV === 'production' ) cookieOptions.secure = true;
-  res.cookie('jwt', token, cookieOptions);
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https'
+  });
 
   // remove the password from response
   user.password = undefined;
@@ -47,7 +46,7 @@ exports.signup = asyncWrapper(
     const url = `${req.protocol}://${req.get('host')}/me`;
     await new Email(newUser, url).sendWelcome();
     
-    createSendToken(newUser, 201, res);
+    createSendToken(newUser, 201, req, res);
   }
 );
 
@@ -75,7 +74,7 @@ exports.login = asyncWrapper (
     };
 
     // if everything is ok, creat token and send it
-    createSendToken(user, 200, res);
+    createSendToken(user, 200, req, res);
   }
 );
 
@@ -138,7 +137,7 @@ exports.resetPassword = asyncWrapper(
     await user.save();
 
     // 3) log user in and send JWT
-    createSendToken(user, 200, res);
+    createSendToken(user, 200, req, res);
   }
 );
 
@@ -167,7 +166,7 @@ exports.updatePassword = asyncWrapper(
     await user.save();
 
     // 4) log user in, send JWT
-    createSendToken(user, 200, res);
+    createSendToken(user, 200, req, res);
   }
 );
 
