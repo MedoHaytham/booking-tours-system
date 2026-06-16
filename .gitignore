@@ -1,0 +1,9 @@
+# dependencies
+/node_modules
+
+# env files (can opt-in for committing if needed)
+config.env*
+
+/dev-data
+/.cache
+/.claude
