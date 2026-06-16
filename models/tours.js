@@ -163,9 +163,9 @@ tourSchema.pre(/^find/, function() {
     });
 });
 
-tourSchema.post(/^find/, function() {
-  console.log(`Query took ${Date.now() - this.start} milliseconds`);
-});
+// tourSchema.post(/^find/, function() {
+//   console.log(`Query took ${Date.now() - this.start} milliseconds`);
+// });
 
 // Aggregation middleware
 // tourSchema.pre('aggregate', function() {
