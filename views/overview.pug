@@ -8,7 +8,10 @@ block content
           .card__header
             .card__picture
               .card__picture-overlay &nbsp;
-              img.card__picture-img(src=`img/tours/${tour.imageCover}`, alt=`${tour.name}`)
+              if tour.imageCover.startsWith('https')
+                img.card__picture-img(src=`${tour.imageCover}`, alt=`${tour.name}`)
+              else
+                img.card__picture-img(src=`/img/tours/${tour.imageCover}`, alt=`${tour.name}`)
             h3.heading-tertirary
               span= tour.name
 

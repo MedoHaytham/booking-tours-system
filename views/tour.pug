@@ -56,7 +56,10 @@ block content
           h2.heading-secondary.ma-bt-lg Your tour guides
           each guide in tour.guides
             .overview-box__detail
-              img.overview-box__img(src=`/img/users/${guide.photo}`, alt= guide.role)
+              if guide.photo.startsWith('https')
+                img.overview-box__img(src=`${guide.photo}`, alt= guide.role)
+              else
+                img.overview-box__img(src=`/img/users/${guide.photo}`, alt= guide.role)
               - if(guide.role === 'lead-guide')
                 span.overview-box__label Lead guide
               - if(guide.role === 'guide')

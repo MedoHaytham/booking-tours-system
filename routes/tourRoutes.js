@@ -42,7 +42,8 @@ router.route('/:id')
   .patch(
     verifyToken, 
     allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE), 
-    tourController.uploadTourImages, tourController.resizeTourImages, 
+    tourController.uploadTourImages, 
+    tourController.resizeTourImages, 
     tourController.updateTour
   )
   .delete(

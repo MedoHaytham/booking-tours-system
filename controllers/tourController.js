@@ -91,20 +91,24 @@ const uploadToCloudinary = file =>
 
 exports.resizeTourImages = asyncWrapper( 
   async(req, res, next) => {
-    if ( !req.files.imageCover || !req.files.images ) return next();
+    if (!req.files || (!req.files.imageCover && !req.files.images)) return next();
 
     // 1) image cover
-    const imageCover = await uploadToCloudinary(req.files.imageCover[0]);
-    req.body.imageCover = imageCover.secure_url;
+    if (req.files.imageCover) {
+      const imageCover = await uploadToCloudinary(req.files.imageCover[0]);
+      req.body.imageCover = imageCover.secure_url;
+    }
   
     // 2) images
-    req.body.images = [];
-    await Promise.all(
-      req.files.images.map ( async (image) => {
-        const imageFilename = await uploadToCloudinary(image)
-        req.body.images.push(imageFilename.secure_url);
-      })
-    );
+    if (req.files.images) {
+      req.body.images = [];
+      await Promise.all(
+        req.files.images.map ( async (image) => {
+          const imageFilename = await uploadToCloudinary(image)
+          req.body.images.push(imageFilename.secure_url);
+        })
+      );
+    }
     next();
   }
 );
