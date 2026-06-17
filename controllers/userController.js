@@ -47,7 +47,14 @@ const uploadToCloudinary = file =>
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: 'users',
-
+        transformation: {
+          width: 500,
+          height: 500,
+          crop: 'fill',
+          gravity: 'face',
+          fetch_format: 'auto',
+          quality: 'auto'
+        }
       },
       (error, result) => {
         if (error) reject(error);
