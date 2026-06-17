@@ -42,6 +42,8 @@ const upload = multer({
   fileFilter: multerFilter
 });
 
+exports.uploadUserPhoto = upload.single('photo');
+
 const uploadToCloudinary = file =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -64,8 +66,6 @@ const uploadToCloudinary = file =>
 
     streamifier.createReadStream(file.buffer).pipe(stream);
   });
-
-exports.uploadUserPhoto = upload.single('photo');
 
 // exports.resizeUserPhoto = asyncWrapper(
 //   async (req, res, next) => {

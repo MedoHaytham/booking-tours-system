@@ -1,5 +1,7 @@
 const multer = require('multer');
-const sharp = require('sharp');
+// const sharp = require('sharp');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
 const Tour = require('../models/tours');
 const AppError = require('../utils/appError');
 const asyncWrapper = require('../utils/asyncWrapper');
@@ -17,6 +19,12 @@ const multerFilter = ( req, file, cb ) => {
   }
 }
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 const upload = multer({
   storage: multerStorge,
   fileFilter: multerFilter
@@ -27,37 +35,80 @@ exports.uploadTourImages = upload.fields([
   { name: 'images', maxCount: 3 }
 ]);
 
+const uploadToCloudinary = file =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'tours',
+        transformation: {
+          width: 2000,
+          height: 1333,
+          crop: 'fill',
+          fetch_format: 'auto',
+          quality: 'auto'
+        }
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
+  });
+
+
+// exports.resizeTourImages = asyncWrapper( 
+//   async(req, res, next) => {
+//     if ( !req.files.imageCover || !req.files.images ) return next();
+
+//     req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+
+//     // 1) image cover
+//     await sharp( req.files.imageCover[0].buffer )
+//       .resize(2000, 1333)
+//       .toFormat('jpeg')
+//       .jpeg({ quality: 90 })
+//       .toFile(`public/img/tours/${req.body.imageCover}`);
+
+//     // 2) images
+//     req.body.images = [];
+//     await Promise.all(
+//       req.files.images.map ( async (image, i) => {
+//         const imageFilename = `tour-${req.params.id}-${Date.now()}-${ i + 1 }.jpeg`;
+//         await sharp( image.buffer )
+//           .resize(2000, 1333)
+//           .toFormat('jpeg')
+//           .jpeg({ quality: 90 })
+//           .toFile(`public/img/tours/${imageFilename}`);
+//         req.body.images.push(imageFilename);
+//       })
+//     );
+
+//     next();
+//   }
+// );
 
 exports.resizeTourImages = asyncWrapper( 
   async(req, res, next) => {
     if ( !req.files.imageCover || !req.files.images ) return next();
 
-    req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
-
     // 1) image cover
-    await sharp( req.files.imageCover[0].buffer )
-      .resize(2000, 1333)
-      .toFormat('jpeg')
-      .jpeg({ quality: 90 })
-      .toFile(`public/img/tours/${req.body.imageCover}`);
-
+    const imageCover = await uploadToCloudinary(req.files.imageCover[0]);
+    req.body.imageCover = imageCover.secure_url;
+  
     // 2) images
     req.body.images = [];
     await Promise.all(
-      req.files.images.map ( async (image, i) => {
-        const imageFilename = `tour-${req.params.id}-${Date.now()}-${ i + 1 }.jpeg`;
-        await sharp( image.buffer )
-          .resize(2000, 1333)
-          .toFormat('jpeg')
-          .jpeg({ quality: 90 })
-          .toFile(`public/img/tours/${imageFilename}`);
-        req.body.images.push(imageFilename);
+      req.files.images.map ( async (image) => {
+        const imageFilename = await uploadToCloudinary(image)
+        req.body.images.push(imageFilename.secure_url);
       })
     );
-
     next();
   }
 );
+
 // middleware to make top 5 cheap tours query
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
