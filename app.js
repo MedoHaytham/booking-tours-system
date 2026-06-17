@@ -17,6 +17,7 @@ const toursRouter = require('./routes/tourRoutes');
 const usersRouter = require('./routes/userRoutes');
 const reviewsRouter = require('./routes/reviewRoutes');
 const bookingsRouter = require('./routes/bookingRoutes');
+const bookingController = require('./controllers/bookingController');
 const viewsRouter = require('./routes/viewRoutes');
 
 const app = express();
@@ -76,6 +77,12 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again in an hour!'
 });
 app.use('/api', limiter);
+
+// booking checkout webhook ( this must come before all other routes ) ( /raw not json ) ( because it will be sent from stripe )
+app.post('/webhook-checkout', 
+  express.raw({type: 'application/json'}), 
+  bookingController.webhookCheckout
+);
 
 // Body parser (reading data from body into req.body)
 app.use(express.json({ limit: '10kb' }));
