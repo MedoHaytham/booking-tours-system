@@ -2,7 +2,6 @@ const express = require('express');
 const viewController = require('../controllers/viewController');
 const { isLoggedIn } = require('../middleware/isLoggedIn');
 const { verifyToken } = require('../middleware/verifyToken');
-const bookingController = require('../controllers/bookingController');
 
 const router = express.Router();
 
