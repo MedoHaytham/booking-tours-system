@@ -46,7 +46,7 @@ app.use(
         workerSrc: ["'self'", "blob:"],
         childSrc: ["'self'", "blob:", "https://js.stripe.com"],
         frameSrc: ["'self'", "https://js.stripe.com"],
-        imgSrc: ["'self'", "data:", "blob:", "https://api.mapbox.com", "https://*.mapbox.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https://api.mapbox.com", "https://*.mapbox.com", "https://res.cloudinary.com"],
         connectSrc: [
           "'self'",
           "https://api.mapbox.com",
