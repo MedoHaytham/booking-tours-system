@@ -96,7 +96,7 @@ exports.resizeTourImages = asyncWrapper(
     // 1) image cover
     if (req.files.imageCover) {
       const imageCover = await uploadToCloudinary(req.files.imageCover[0]);
-      req.body.imageCover = imageCover.secure_url;
+      req.body.imageCover = imageCover.secure_url.replace('/upload/', '/upload/q_auto/f_auto/');
     }
   
     // 2) images
@@ -105,7 +105,7 @@ exports.resizeTourImages = asyncWrapper(
       await Promise.all(
         req.files.images.map ( async (image) => {
           const imageFilename = await uploadToCloudinary(image)
-          req.body.images.push(imageFilename.secure_url);
+          req.body.images.push(imageFilename.secure_url.replace('/upload/', '/upload/q_auto/f_auto/'));
         })
       );
     }

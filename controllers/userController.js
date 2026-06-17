@@ -88,7 +88,7 @@ exports.resizeUserPhoto = asyncWrapper(async (req, res, next) => {
 
   const result = await uploadToCloudinary(req.file);
 
-  req.body.photo = result.secure_url;
+  req.body.photo = result.secure_url.replace('/upload/', '/upload/q_auto/f_auto/');
 
   next();
 });
