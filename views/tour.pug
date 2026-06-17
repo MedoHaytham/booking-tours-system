@@ -72,13 +72,14 @@ block content
       each paragraph in paragraphs
         p.description__text= paragraph
 
-  section.section-pictures
-    each image,index in tour.images
-      .picture-box
-        if image.startsWith('https')
-          img.picture-box__img(src=`${image}`, alt=`${image}`, class=`picture-box__img--${index + 1}`)
-        else
-          img.picture-box__img(src=`/img/tours/${image}`, alt=`${image}`, class=`picture-box__img--${index + 1}`)
+  if tour.images && tour.images.length > 0
+    section.section-pictures
+      each image,index in tour.images
+        .picture-box
+          if image && image.startsWith('https')
+            img.picture-box__img(src=`${image}`, alt=`${image}`, class=`picture-box__img--${index + 1}`)
+          else if image
+            img.picture-box__img(src=`/img/tours/${image}`, alt=`${image}`, class=`picture-box__img--${index + 1}`)
     
   section.section-map
     #map(data-locations=`${JSON.stringify(tour.locations)}` data-token=`${process.env.MAPBOX_TOKEN}`)
@@ -103,12 +104,16 @@ block content
     .cta
       .cta__img.cta__img--logo
         img(src='/img/logo-white.png', alt='Natours logo')
-      if tour.images[1].startsWith('https')
-        img.cta__img.cta__img--1(src=`${tour.images[1]}`, alt=`${tour.images[1]}`)
-        img.cta__img.cta__img--2(src=`${tour.images[2]}`, alt=`${tour.images[2]}`)
-      else
-        img.cta__img.cta__img--1(src=`/img/tours/${tour.images[1]}`, alt=`${tour.images[1]}`)
-        img.cta__img.cta__img--2(src=`/img/tours/${tour.images[2]}`, alt=`${tour.images[2]}`)
+      if tour.images && tour.images[1]
+        if tour.images[1].startsWith('https')
+          img.cta__img.cta__img--1(src=`${tour.images[1]}`, alt=`${tour.name}`)
+        else
+          img.cta__img.cta__img--1(src=`/img/tours/${tour.images[1]}`, alt=`${tour.name}`)
+      if tour.images && tour.images[2]
+        if tour.images[2].startsWith('https')
+          img.cta__img.cta__img--2(src=`${tour.images[2]}`, alt=`${tour.name}`)
+        else
+          img.cta__img.cta__img--2(src=`/img/tours/${tour.images[2]}`, alt=`${tour.name}`)
       .cta__content
         h2.heading-secondary What are you waiting for?
         p.cta__text= `${tour.duration} days. 1 adventure. Infinite memories. Make it yours today!`
