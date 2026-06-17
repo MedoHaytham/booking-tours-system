@@ -1,10 +1,14 @@
 const multer = require('multer');
-const sharp = require('sharp');
+// const sharp = require('sharp');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
 const User = require('../models/users');
 const asyncWrapper = require('../utils/asyncWrapper');
 const AppError = require('../utils/appError');
 const httpStatus = require('../utils/httpStatusText');
 const factory = require('./handlerFactory');
+
+
 
 // const multerStorge = multer.diskStorage({
 //   destination: ( req, file, cb ) => {
@@ -27,28 +31,60 @@ const multerFilter = ( req, file, cb ) => {
   }
 }
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 const upload = multer({
   storage: multerStorge,
   fileFilter: multerFilter
 });
 
+const uploadToCloudinary = file =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'users',
+
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
+  });
+
 exports.uploadUserPhoto = upload.single('photo');
 
-exports.resizeUserPhoto = asyncWrapper(
-  async (req, res, next) => {
-    if ( !req.file ) return next();
+// exports.resizeUserPhoto = asyncWrapper(
+//   async (req, res, next) => {
+//     if ( !req.file ) return next();
 
-    req.file.filename = `user-${req.currentUser._id}-${Date.now()}.jpeg`
+//     req.file.filename = `user-${req.currentUser._id}-${Date.now()}.jpeg`
 
-    await sharp( req.file.buffer )
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .jpeg({quality: 90})
-      .toFile(`public/img/users/${req.file.filename}`);
+//     await sharp( req.file.buffer )
+//       .resize(500, 500)
+//       .toFormat('jpeg')
+//       .jpeg({quality: 90})
+//       .toFile(`public/img/users/${req.file.filename}`);
       
-    next();
-  }
-);
+//     next();
+//   }
+// );
+
+exports.resizeUserPhoto = asyncWrapper(async (req, res, next) => {
+  if (!req.file) return next();
+
+  const result = await uploadToCloudinary(req.file);
+
+  req.body.photo = result.secure_url;
+
+  next();
+});
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -78,8 +114,8 @@ exports.updateMe = asyncWrapper(
     // but filterObj is better
     
     //2) filter out unwanted fields names that are not allowed to be updated
-    const filteredBody = filterObj(req.body, 'name', 'email');
-    if( req.file ) filteredBody.photo = req.file.filename;
+    const filteredBody = filterObj(req.body, 'name', 'email', 'photo');
+    // if( req.file ) filteredBody.photo = req.file.filename;
 
     // 3) update user document
     const { _id } = req.currentUser;

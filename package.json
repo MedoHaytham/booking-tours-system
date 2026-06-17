@@ -34,6 +34,7 @@
     "@babel/polyfill": "^7.12.1",
     "axios": "^1.17.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -52,6 +53,7 @@
     "pug": "^3.0.4",
     "sharp": "^0.34.5",
     "slugify": "^1.6.9",
+    "streamifier": "^0.1.1",
     "stripe": "^22.2.1",
     "validator": "^13.15.35",
     "xss-clean": "^0.1.4"
