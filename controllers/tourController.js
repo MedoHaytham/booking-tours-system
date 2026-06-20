@@ -152,6 +152,24 @@ exports.createTour = asyncWrapper(
 exports.updateTour = factory.updateOne(Tour);
 exports.deleteTour = factory.deleteOne(Tour);
 
+exports.getTourBySlug = asyncWrapper(
+  async (req, res, next) => {
+    const { slug } = req.params;
+    const tour = await Tour.findOne({ slug }).populate('reviews');
+
+    if (!tour) {
+      return next(new AppError('Tour not found', 404));
+    }
+
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      data: {
+        tour,
+      }
+    });
+  }
+);
+
 exports.getToursWithin = asyncWrapper(
   async (req, res, next) => {
     const { distance, latlng, unit } = req.params;

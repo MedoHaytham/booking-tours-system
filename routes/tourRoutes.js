@@ -52,4 +52,7 @@ router.route('/:id')
     tourController.deleteTour
   );
 
+router.route('/slug/:slug')
+  .get(tourController.getTourBySlug);
+
 module.exports = router;
