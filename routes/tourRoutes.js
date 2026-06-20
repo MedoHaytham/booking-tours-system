@@ -29,6 +29,9 @@ router.route('/tour-within/:distance/center/:latlng/unit/:unit')
 router.route('/distances/:latlng/unit/:unit')
   .get(tourController.getDistances)
 
+router.route('/slug/:slug')
+  .get(tourController.getTourBySlug);
+
 router.route('/')
   .get(tourController.getAllTours)
   .post(
@@ -52,7 +55,5 @@ router.route('/:id')
     tourController.deleteTour
   );
 
-router.route('/slug/:slug')
-  .get(tourController.getTourBySlug);
 
 module.exports = router;
