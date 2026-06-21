@@ -26,9 +26,11 @@ exports.getMyTours = asyncWrapper(
     const tourIDs = bookings.map( booking => booking.tour);
     const tours = await Tour.find({_id: {$in: tourIDs }});
 
-    res.status(200).render('overview', {
-      title: 'My Tours',
-      tours
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      data: {
+        data: tours
+      }
     });
   }
 );
