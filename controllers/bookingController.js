@@ -15,15 +15,20 @@ exports.deleteBooking = factory.deleteOne(Booking);
 
 exports.getMyTours = asyncWrapper(
   async (req, res, next) => {
-    const bookings = await Booking.find({ user: req.currentUser._id }).populate('tour');
-    const tours = bookings.map(b => b.tour).filter(Boolean);
+    // 1) find all bookings for this user
+    const bookings = await Booking.find({user: req.currentUser._id})
 
-    res.status(200).json({
-      status: httpStatus.SUCCESS,
-      results: tours.length,
-      data: {
-        data: tours
-      }
+    // We can get tours like this
+    // const tours = bookings.map( book => book.tour);
+    // but we must populate the tour in the bookings model
+    // otherwise 
+    // 2) find the tours using the booking ids
+    const tourIDs = bookings.map( booking => booking.tour);
+    const tours = await Tour.find({_id: {$in: tourIDs }});
+
+    res.status(200).render('overview', {
+      title: 'My Tours',
+      tours
     });
   }
 );
