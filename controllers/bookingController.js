@@ -28,8 +28,9 @@ exports.getMyTours = asyncWrapper(
 
     res.status(200).json({
       status: httpStatus.SUCCESS,
+      length: tours.length,
       data: {
-        data: tours
+        tours
       }
     });
   }
