@@ -13,6 +13,21 @@ exports.updateBooking = factory.updateOne(Booking);
 exports.deleteBooking = factory.deleteOne(Booking);
 
 
+exports.getMyTours = asyncWrapper(
+  async (req, res, next) => {
+    const bookings = await Booking.find({ user: req.currentUser._id }).populate('tour');
+    const tours = bookings.map(b => b.tour).filter(Boolean);
+
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      results: tours.length,
+      data: {
+        data: tours
+      }
+    });
+  }
+);
+
 exports.getCheckoutSession = asyncWrapper(
   async(req, res, next) => {
     // 1) Get the currently booked tour

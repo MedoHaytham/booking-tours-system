@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.get('/checkout-session/:tourId', bookingController.getCheckoutSession);
+router.get('/my-tours', bookingController.getMyTours);
 
 router.use(allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE));
 
