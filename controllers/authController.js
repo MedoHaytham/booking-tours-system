@@ -44,10 +44,12 @@ exports.signup = asyncWrapper(
 
     // 2) send welcome email
     const url = `${req.protocol}://${req.get('host')}/me`;
-    new Email(newUser, url).sendWelcome().catch((err) => {
-      console.error('SendGrid Error:', err.message);
-      console.error('Full error:', err);
-    });
+    try {
+      await new Email(newUser, url).sendWelcome();
+    } catch (err) {
+      console.error('SendGrid welcome email error:', err.message);
+      console.error('SendGrid full error:', err);
+    }
     
     createSendToken(newUser, 201, req, res);
   }
