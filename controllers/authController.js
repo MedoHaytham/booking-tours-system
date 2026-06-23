@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
@@ -43,7 +44,7 @@ exports.signup = asyncWrapper(
     });
 
     // 2) send welcome email
-    const url = `${req.protocol}://${req.get('host')}/me`;
+    const url = `${process.env.FRONTEND_URL}/me`;
     try {
       await new Email(newUser, url).sendWelcome();
     } catch (err) {
