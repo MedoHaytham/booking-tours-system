@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const pug = require('pug');
 const htmlToText = require('html-to-text');
+const axios = require('axios');
 
 module.exports = class Email {
   constructor (user, url) {
@@ -46,17 +47,60 @@ module.exports = class Email {
       }
     );
 
-    // 2) Define email options
-    const mailOptions = {
-      from: this.from,
-      to: this.to,
-      subject,
-      html,
-      text: htmlToText.convert(html)
-    };
+    // 2) Send email
+    if (process.env.NODE_ENV === 'production') {
+      // Parse from address to separate name and email
+      let fromEmail = process.env.EMAIL_FROM || 'medotv1000@gmail.com';
+      let fromName = 'Mohamed Haytham';
+      const fromMatch = this.from.match(/(.+)\s*<(.+)>/);
+      if (fromMatch) {
+        fromName = fromMatch[1].trim();
+        fromEmail = fromMatch[2].trim();
+      }
 
-    // 3) Create transporter and send email
-    await this.newTransport().sendMail(mailOptions);
+      await axios.post(
+        'https://api.sendgrid.com/v3/mail/send',
+        {
+          personalizations: [
+            {
+              to: [{ email: this.to }]
+            }
+          ],
+          from: {
+            email: fromEmail,
+            name: fromName
+          },
+          subject: subject,
+          content: [
+            {
+              type: 'text/plain',
+              value: htmlToText.convert(html)
+            },
+            {
+              type: 'text/html',
+              value: html
+            }
+          ]
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.SENDGRID_PASSWORD}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } else {
+      // Development (Mailtrap SMTP)
+      const mailOptions = {
+        from: this.from,
+        to: this.to,
+        subject,
+        html,
+        text: htmlToText.convert(html)
+      };
+
+      await this.newTransport().sendMail(mailOptions);
+    }
   }
 
   async sendWelcome (){
