@@ -144,6 +144,7 @@ tourSchema.virtual('durationWeeks').get(function() {
 });
 
 tourSchema.virtual('available').get(function() {
+  if (!this.startDates || this.startDates.length === 0) return false;
   const now = new Date();
   return this.startDates.some(date => !date.soldOut && date.startDate > now);
 });

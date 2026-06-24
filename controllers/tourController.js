@@ -138,6 +138,9 @@ exports.createTour = asyncWrapper(
       imageCover: req.body.imageCover,
       images: req.body.images,
       guides: req.body.guides,
+      startLocation: req.body.startLocation,
+      locations: req.body.locations,
+      startDates: req.body.startDates,
     });
 
     res.status(201).json({
