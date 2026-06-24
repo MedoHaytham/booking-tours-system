@@ -1,5 +1,7 @@
 const Review = require('../models/reviews');
 const factory = require('./handlerFactory');
+const asyncWrapper = require('../utils/asyncWrapper');
+const httpStatus = require('../utils/httpStatusText');
 
 // handlers
 exports.getAllReviews = factory.getAll(Review);
@@ -14,3 +16,17 @@ exports.setTourAndUserIds = (req, res, next) => {
   if (!req.body.user) req.body.user = req.currentUser._id;
   next();
 };
+
+exports.getMyReviews = asyncWrapper(
+  async (req, res, next) => {
+    const reviews = await Review.find({user: req.currentUser._id});
+
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      results: reviews.length,
+      data: {
+        reviews
+      }
+    });
+  }
+);
