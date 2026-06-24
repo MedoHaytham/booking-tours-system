@@ -19,7 +19,7 @@ exports.setTourAndUserIds = (req, res, next) => {
 
 exports.getMyReviews = asyncWrapper(
   async (req, res, next) => {
-    const reviews = await Review.find({user: req.currentUser._id});
+    const reviews = await Review.find({user: req.currentUser._id}).populate('tour', 'name slug');
 
     res.status(200).json({
       status: httpStatus.SUCCESS,
