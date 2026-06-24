@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const { verifyToken } = require('../middleware/verifyToken');
 const { allowedTo } = require('../middleware/allowedTo');
 const { USER_ROLES } = require('../utils/usersRoles');
+const nestedBookingsRouter = require('./nestedBookingRoutes');
 
 
 const router = express.Router();
@@ -17,6 +18,11 @@ router.get('/logout', authController.logout);
 
 // protected routes
 router.use(verifyToken);
+
+router.use('/:userId/bookings', 
+  allowedTo(USER_ROLES.ADMIN), 
+  nestedBookingsRouter
+);
 
 router.get('/me', userController.getMe, userController.getUser);
 router.patch(

@@ -1,6 +1,7 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const reviewsRouter = require('./reviewRoutes');
+const nestedBookingsRouter = require('./nestedBookingRoutes');
 
 const { verifyToken } = require('../middleware/verifyToken');
 const { allowedTo } = require('../middleware/allowedTo');
@@ -9,6 +10,11 @@ const { USER_ROLES } = require('../utils/usersRoles');
 const router = express.Router();
 
 router.use('/:tourId/reviews', reviewsRouter);
+router.use('/:tourId/bookings',
+  verifyToken, 
+  allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE, USER_ROLES.GUIDE), 
+  nestedBookingsRouter
+);
 
 router.route('/top-5-cheap')
   .get(tourController.aliasTopTours, tourController.getAllTours);

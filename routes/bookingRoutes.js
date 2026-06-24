@@ -11,11 +11,10 @@ router.use(verifyToken);
 router.get('/checkout-session/:tourId', bookingController.getCheckoutSession);
 router.get('/my-tours', bookingController.getMyTours);
 
-router.use(allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE));
+router.use(allowedTo(USER_ROLES.ADMIN));
 
 router.route('/')
-  .get(bookingController.getAllBookings)
-  .post(bookingController.createBooking);
+  .get(bookingController.getAllBookings);
 
 router.route('/:id')
   .get(bookingController.getBooking)
