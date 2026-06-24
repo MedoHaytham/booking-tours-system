@@ -79,9 +79,22 @@ const tourSchema = new mongoose.Schema({
     default: Date.now(),
     select: false,
   },
-  startDates: {
-    type: [Date],
-  },
+  startDates: [
+    {
+      startDate: {
+        type: Date,
+        required: [true, 'tour must have a start date']
+      },
+      participants: {
+        type: Number,
+        default: 0
+      },
+      soldOut: {
+        type: Boolean,
+        default: false
+      },
+    }
+  ],
   secretTour: {
     type: Boolean,
     default: false,
@@ -128,6 +141,11 @@ tourSchema.index({ startLocation: '2dsphere' });
 // Virtual property
 tourSchema.virtual('durationWeeks').get(function() {
   return this.duration / 7;
+});
+
+tourSchema.virtual('available').get(function() {
+  const now = new Date();
+  return this.startDates.some(date => !date.soldOut && date.startDate > now);
 });
 
 tourSchema.virtual('reviews', {

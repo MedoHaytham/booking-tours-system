@@ -11,13 +11,22 @@ const bookingSchema = new mongoose.Schema({
     ref: 'User',
     required: [true, 'Booking must belong to a User!']
   },
+  date: {
+    type: Date,
+    required: [true, 'Booking must have a date.']
+  },
   price: {
     type: Number,
     required: [true, 'Booking must have a price.']
   },
-  createAt: {
+  sessionId: {
+    type: String,
+    unique: true,
+    required: [true, 'Booking must have a session id.']
+  },
+  createdAt: {
     type: Date,
-    default: Date.now()
+    default: Date.now
   },
   paid: {
     type: Boolean,

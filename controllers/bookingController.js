@@ -5,6 +5,7 @@ const Tour = require('../models/tours');
 const User = require('../models/users');
 const httpStatus = require('../utils/httpStatusText');
 const factory = require('./handlerFactory');
+const AppError = require('../utils/appError');
 
 exports.getAllBookings = factory.getAll(Booking);
 exports.getBooking = factory.getOne(Booking);
@@ -37,10 +38,38 @@ exports.getMyTours = asyncWrapper(
 
 exports.getCheckoutSession = asyncWrapper(
   async(req, res, next) => {
-    // 1) Get the currently booked tour
-    const tour = await Tour.findById(req.params.tourId);
 
-    // 2) Create checkout session
+    const { tourId, dateId } = req.params;
+    // 1) Get the currently booked tour and the booked date
+    const tour = await Tour.findById(tourId);
+    const bookedDate = tour.startDates.id(dateId);
+
+    if (!bookedDate){
+      return next(new AppError('Date not found', 404));
+    }
+
+    // 2) Check if the tour sold out and current date
+    if (bookedDate.startDate <= new Date()) {
+      return next(new AppError('This tour date has already passed', 400));
+    }
+
+    if (bookedDate.soldOut){
+      return next(new AppError('This tour is sold out', 400));
+    }
+
+    // 3) Check if user has already booked this tour
+    const existingBooking = await Booking.findOne({
+      tour: tourId,
+      user: req.currentUser._id,
+      date: bookedDate.startDate,
+      paid: true
+    });
+
+    if (existingBooking){
+      return next(new AppError('You have already booked this tour', 400));
+    }
+
+    // 4) Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -48,6 +77,7 @@ exports.getCheckoutSession = asyncWrapper(
       cancel_url: `${process.env.FRONTEND_URL}/tour/${tour.slug}`,
       customer_email: req.currentUser.email,
       client_reference_id: req.params.tourId,
+      metadata: { dateId },
       line_items: [
         {
           price_data: {
@@ -94,14 +124,31 @@ exports.getCheckoutSession = asyncWrapper(
 // );
 
 const createBookingCheckout = async session => {
+  const exists = await Booking.findOne({ sessionId: session.id });
+  if(exists) return ;
+  
   const tourId = session.client_reference_id;
+  const { dateId } = session.metadata;
+
   const userDoc = await User.findOne({ email: session.customer_email });
   if (!userDoc) return;
-  const user = userDoc.id;
-  const tour = await Tour.findById(tourId);
-  const { price } = tour
 
-  await Booking.create({ tour: tourId, user, price});
+  const tour = await Tour.findById(tourId);
+  const bookedDate = tour.startDates.id(dateId);
+  if (!bookedDate) return;
+
+  // increase the participants and update the soldOut field if participants reach the maxGroupSize
+  bookedDate.participants += 1;
+  if (bookedDate.participants >= tour.maxGroupSize) bookedDate.soldOut = true;
+  await tour.save();
+  
+  await Booking.create({ 
+    tour: tourId, 
+    user: userDoc._id,
+    date: bookedDate.startDate,
+    price: tour.price, 
+    sessionId: session.id
+  });
 };
 
 exports.webhookCheckout = asyncWrapper(

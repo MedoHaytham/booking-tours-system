@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.use(verifyToken);
 
-router.get('/checkout-session/:tourId', bookingController.getCheckoutSession);
+router.get('/checkout-session/:tourId/:dateId', bookingController.getCheckoutSession);
 router.get('/my-tours', bookingController.getMyTours);
 
 router.use(allowedTo(USER_ROLES.ADMIN));
