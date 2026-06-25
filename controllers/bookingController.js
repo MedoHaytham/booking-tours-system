@@ -24,7 +24,7 @@ exports.getMyTours = asyncWrapper(
 
     // 3) also return the booked dates so the frontend can check per-date
     const bookedDates = bookings.map(b => ({
-      tourId: b.tour.toString(),
+      tourId: (b.tour._id ?? b.tour).toString(),
       date: b.date,
     }));
 
