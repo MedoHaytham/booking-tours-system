@@ -18,6 +18,10 @@ exports.getMyTours = asyncWrapper(
     // 1) find all bookings for this user
     const bookings = await Booking.find({ user: req.currentUser._id });
 
+    // We can get tours like this
+    // const tours = bookings.map( book => book.tour);
+    // but we must populate the tour in the bookings model
+    // otherwise 
     // 2) find the tours using the booking ids
     const tourIDs = bookings.map(booking => booking.tour);
     const tours = await Tour.find({ _id: { $in: tourIDs } });
@@ -31,7 +35,10 @@ exports.getMyTours = asyncWrapper(
     res.status(200).json({
       status: httpStatus.SUCCESS,
       length: tours.length,
-      data: { tours, bookedDates }
+      data: { 
+        tours,
+        bookedDates
+      }
     });
   }
 );
