@@ -64,11 +64,11 @@ exports.getCheckoutSession = asyncWrapper(
       return next(new AppError('This tour is sold out', 400));
     }
 
-    // 3) Check if user has already booked this tour on any future/active date
+    // 3) Check if user has already booked this tour on the same date
     const existingBooking = await Booking.findOne({
       tour: tourId,
       user: req.currentUser._id,
-      date: { $gte: new Date() },
+      date: bookedDate.startDate,
       paid: true
     });
 
