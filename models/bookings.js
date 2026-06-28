@@ -34,6 +34,8 @@ const bookingSchema = new mongoose.Schema({
   }
 });
 
+bookingSchema.index({ tour: 1, user: 1 });
+
 
 // Query middleware
 bookingSchema.pre(/^find/, function(){

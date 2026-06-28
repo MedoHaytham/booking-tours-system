@@ -6,15 +6,18 @@ const {USER_ROLES} = require('../utils/usersRoles');
 
 const router = express.Router({ mergeParams: true });
 
-
-
 router.use(verifyToken);
 
 router.get('/my-reviews', reviewController.getMyReviews);
 
 router.route('/')
   .get(reviewController.getAllReviews)
-  .post(allowedTo(USER_ROLES.USER), reviewController.setTourAndUserIds, reviewController.createReview);
+  .post(
+    allowedTo(USER_ROLES.USER),
+    reviewController.setTourAndUserIds, 
+    reviewController.checkIfTourBought, 
+    reviewController.createReview
+  );
 
 router.route('/:id')
   .get(reviewController.getReview)

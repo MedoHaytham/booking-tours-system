@@ -2,6 +2,8 @@ const Review = require('../models/reviews');
 const factory = require('./handlerFactory');
 const asyncWrapper = require('../utils/asyncWrapper');
 const httpStatus = require('../utils/httpStatusText');
+const Booking = require('../models/bookings');
+const AppError = require('../utils/appError');
 
 // handlers
 exports.getAllReviews = factory.getAll(Review);
@@ -16,6 +18,24 @@ exports.setTourAndUserIds = (req, res, next) => {
   if (!req.body.user) req.body.user = req.currentUser._id;
   next();
 };
+
+exports.checkIfTourBoughtandPassed = asyncWrapper(
+  async (req, res, next) => {
+    const bookedTour = await Booking.findOne({
+      tour: req.body.tour, 
+      user: req.currentUser._id,
+      paid: true
+    });
+
+    if (!bookedTour) {
+      return next(new AppError('You must buy the tour before reviewing it', 400));
+    }
+    if (bookedTour.date > new Date()) {
+      return next(new AppError('You must go to the tour before reviewing it', 400));
+    }
+    next();
+  }
+);
 
 exports.getMyReviews = asyncWrapper(
   async (req, res, next) => {
