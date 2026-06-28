@@ -19,7 +19,7 @@ exports.setTourAndUserIds = (req, res, next) => {
   next();
 };
 
-exports.checkIfTourBoughtandPassed = asyncWrapper(
+exports.checkIfTourBoughtAndPassed = asyncWrapper(
   async (req, res, next) => {
     const bookedTour = await Booking.findOne({
       tour: req.body.tour, 

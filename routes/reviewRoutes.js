@@ -15,7 +15,7 @@ router.route('/')
   .post(
     allowedTo(USER_ROLES.USER),
     reviewController.setTourAndUserIds, 
-    reviewController.checkIfTourBought, 
+    reviewController.checkIfTourBoughtAndPassed, 
     reviewController.createReview
   );
 
