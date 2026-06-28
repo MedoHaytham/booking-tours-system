@@ -31,7 +31,7 @@ exports.checkIfTourBoughtAndPassed = asyncWrapper(
       return next(new AppError('You must buy the tour before reviewing it', 400));
     }
     if (bookedTour.date > new Date()) {
-      return next(new AppError('You must go to the tour before reviewing it', 400));
+      return next(new AppError('You must have enjoyed the tour before reviewing it', 400));
     }
     next();
   }
