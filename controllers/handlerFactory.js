@@ -3,7 +3,7 @@ const httpStatus = require('../utils/httpStatusText');
 const AppError = require('../utils/appError');
 const APIfeatures = require('../utils/apiFeatures');
 
-exports.getAll = Model => asyncWrapper(
+exports.getAll = (Model, searchFields = []) => asyncWrapper(
   async (req, res, next) => {
 
     // to allow nested GET reviews on tour
@@ -12,15 +12,20 @@ exports.getAll = Model => asyncWrapper(
     if (req.params.userId) filter = { user: req.params.userId };
 
     const features = new APIfeatures(Model.find(filter), req.query)
+      .search(searchFields)
       .filter()
       .sort()
-      .limitFields()
-      .paginate();
+      .limitFields();
 
+    // To get total number of documents
+    const total = await Model.countDocuments(features.query.getFilter());
+
+    features.paginate();
     const doc = await features.query;
 
     res.status(200).json({
       status: httpStatus.SUCCESS,
+      total,
       results: doc.length,
       data: {
         data: doc

@@ -122,7 +122,7 @@ exports.aliasTopTours = (req, res, next) => {
 };
 
 // handlers
-exports.getAllTours = factory.getAll(Tour);
+exports.getAllTours = factory.getAll(Tour, ['name', 'summary', 'description']);
 exports.getTour = factory.getOne(Tour, { path: 'reviews', select: '-__v' });
 
 exports.createTour = asyncWrapper( 

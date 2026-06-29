@@ -102,7 +102,7 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 // admin only handlers
-exports.getAllUsers = factory.getAll(User);
+exports.getAllUsers = factory.getAll(User, ['name', 'email']);
 exports.getUser = factory.getOne(User);
 exports.updateUser = factory.updateOne(User);
 exports.deleteUser = factory.deleteOne(User);
