@@ -10,6 +10,11 @@ class APIfeatures {
     const excludedFields = ['page', 'sort', 'limit', 'fields', 'search'];
     excludedFields.forEach(el => delete queryObj[el]);
 
+    // Remove empty-string values so they don't produce a bad MongoDB filter
+    Object.keys(queryObj).forEach(key => {
+      if (queryObj[key] === '' || queryObj[key] === undefined) delete queryObj[key];
+    });
+
     // Advanced Filtering
     let queryStr = JSON.stringify(queryObj)
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
