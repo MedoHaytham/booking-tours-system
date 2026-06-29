@@ -24,7 +24,8 @@ exports.checkIfTourBoughtAndPassed = asyncWrapper(
     const bookedTour = await Booking.findOne({
       tour: req.body.tour, 
       user: req.currentUser._id,
-      paid: true
+      paid: true,
+      date: { $lte: new Date() }
     });
 
     if (!bookedTour) {
