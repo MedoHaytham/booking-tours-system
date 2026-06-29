@@ -35,7 +35,7 @@ block content
             svg.overview-box__icon
               use(xlink:href='/img/icons.svg#icon-calendar')
             span.overview-box__label Next date
-            span.overview-box__text= tour.startDates[0].toLocaleString('en-US', {month: 'long', year: 'numeric'})
+            span.overview-box__text= tour.startDates[0].startDate.toLocaleString('en-US', {month: 'long', year: 'numeric'})
           .overview-box__detail
             svg.overview-box__icon
               use(xlink:href='/img/icons.svg#icon-trending-up')
