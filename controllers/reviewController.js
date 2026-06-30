@@ -6,7 +6,7 @@ const Booking = require('../models/bookings');
 const AppError = require('../utils/appError');
 
 // handlers
-exports.getAllReviews = factory.getAll(Review);
+exports.getAllReviews = factory.getAll(Review, ['review']);
 exports.getReview = factory.getOne(Review);
 exports.createReview = factory.createOne(Review);
 exports.updateReview = factory.updateOne(Review);
@@ -51,3 +51,35 @@ exports.getMyReviews = asyncWrapper(
     });
   }
 );
+
+exports.getReviewsStats = asyncWrapper(async (req, res, next) => {
+  const stats = await Review.aggregate([
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        avgRating: { $avg: '$rating' },
+        fiveStars: { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } },
+        fourStars: { $sum: { $cond: [{ $eq: ['$rating', 4] }, 1, 0] } },
+        threeStars: { $sum: { $cond: [{ $eq: ['$rating', 3] }, 1, 0] } },
+        twoStars: { $sum: { $cond: [{ $eq: ['$rating', 2] }, 1, 0] } },
+        oneStar: { $sum: { $cond: [{ $eq: ['$rating', 1] }, 1, 0] } }
+      }
+    }
+  ]);
+
+  const result = stats[0] || {
+    total: 0,
+    avgRating: 0,
+    fiveStars: 0,
+    fourStars: 0,
+    threeStars: 0,
+    twoStars: 0,
+    oneStar: 0
+  };
+
+  res.status(200).json({
+    status: httpStatus.SUCCESS,
+    data: result
+  });
+});

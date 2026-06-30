@@ -65,7 +65,7 @@ reviewSchema.post(/^findOneAnd/, async function(doc) {
 });
 
 reviewSchema.pre(/^find/, function() {
-  this.populate('user', 'name photo');
+  this.populate('user', 'name photo').populate('tour', 'name');
 });
 
 

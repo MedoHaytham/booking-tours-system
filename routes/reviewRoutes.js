@@ -9,6 +9,7 @@ const router = express.Router({ mergeParams: true });
 router.use(verifyToken);
 
 router.get('/my-reviews', reviewController.getMyReviews);
+router.get('/stats', allowedTo(USER_ROLES.ADMIN), reviewController.getReviewsStats);
 
 router.route('/')
   .get(reviewController.getAllReviews)
