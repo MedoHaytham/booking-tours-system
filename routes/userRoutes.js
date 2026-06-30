@@ -37,6 +37,9 @@ router.delete('/deleteMe', userController.deleteMe);
 // admin only routes
 router.use(allowedTo(USER_ROLES.ADMIN));
 
+router.route('/stats')
+  .get(userController.getUsersStats);
+
 router.route('/')
   .get(userController.getAllUsers);
 

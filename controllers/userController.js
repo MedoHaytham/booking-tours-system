@@ -157,3 +157,24 @@ exports.getMe = (req, res, next) => {
   req.params.id = req.currentUser._id;
   next();
 }
+
+exports.getUsersStats = asyncWrapper(async (req, res, next) => {
+  const stats = await User.aggregate([
+    {
+      $group: {
+        _id: '$role',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const result = { total: 0, admins: 0, guides: 0, regular: 0 };
+  stats.forEach(({ _id, count }) => {
+    result.total += count;
+    if (_id === 'admin') result.admins = count;
+    else if (_id === 'guide' || _id === 'lead-guide') result.guides += count;
+    else if (_id === 'user') result.regular = count;
+  });
+
+  res.status(200).json({ status: 'success', data: result });
+});
