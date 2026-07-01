@@ -98,7 +98,7 @@ app.use(xss());
 
 // Prevent parameter pollution
 app.use(hpp({
-  whitelist: ['duration', 'ratingsAverage', 'ratingsQuantity', 'maxGroupSize', 'difficulty', 'price']
+  whitelist: ['duration', 'ratingsAverage', 'ratingsQuantity', 'maxGroupSize', 'difficulty', 'price', 'available']
 }));
 
 // Compression

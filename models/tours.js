@@ -128,10 +128,6 @@ const tourSchema = new mongoose.Schema({
       ref: 'User'
     }
   ],
-  available: {
-    type: Boolean,
-    default: true
-  }
 }, 
 { 
   toJSON: { virtuals: true },
@@ -147,11 +143,11 @@ tourSchema.virtual('durationWeeks').get(function() {
   return this.duration / 7;
 });
 
-// tourSchema.virtual('available').get(function() {
-//   if (!this.startDates || this.startDates.length === 0) return false;
-//   const now = new Date();
-//   return this.startDates.some(date => !date.soldOut && date.startDate > now);
-// });
+tourSchema.virtual('available').get(function() {
+  if (!this.startDates || this.startDates.length === 0) return false;
+  const now = new Date();
+  return this.startDates.some(date => !date.soldOut && date.startDate > now);
+});
 
 tourSchema.virtual('reviews', {
   ref: 'Review',
@@ -165,11 +161,10 @@ tourSchema.pre('save', function() {
 });
 
 tourSchema.pre('save', function() {
-  if (this.startDates && this.startDates.length > 0) {
-    this.available = this.startDates.some(date => !date.soldOut && date.startDate > new Date());
-  } else {
-    this.available = false;
-  }
+  const now = new Date();
+  this.startDates.forEach(date => {
+    if (date.startDate < now) date.soldOut = true;
+  });
 });
 
 // tourSchema.pre('save', () => {
@@ -183,7 +178,6 @@ tourSchema.pre('save', function() {
 // Query middleware
 tourSchema.pre(/^find/, function() {
   this.find({ secretTour: { $ne: true} });
-  this.start = Date.now();
 });
 
 tourSchema.pre(/^find/, function() {
