@@ -201,7 +201,84 @@ exports.getToursWithin = asyncWrapper(
 
 
 // aggregation pipeline handlers
+
 exports.getTourStats = asyncWrapper( 
+  async (req, res, next) => {
+    const stats = await Tour.aggregate([
+      {
+        $group: {
+          _id: null,
+          numTours:    { $sum: 1 },
+          avgRating:   { $avg: '$ratingsAverage' },
+          avgPrice:    { $avg: '$price' },
+          numAvailableTours: {
+            $sum: {
+              $cond: {
+                if: {
+                  $gt: [
+                    {
+                      $size: {
+                        $filter: {
+                          input: '$startDates',
+                          as: 'date',
+                          cond: {
+                            $and: [
+                              { $gt: ['$$date.startDate', new Date()] },
+                              { $eq: ['$$date.soldOut', false] }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                then: 1,
+                else: 0
+              }
+            }
+          },
+          numSoldOut: {
+            $sum: {
+              $cond: {
+                if: {
+                  $eq: [
+                    {
+                      $size: {
+                        $filter: {
+                          input: '$startDates',
+                          as: 'date',
+                          cond: {
+                            $and: [
+                              { $gt: ['$$date.startDate', new Date()] },
+                              { $eq: ['$$date.soldOut', false] }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                then: 1,
+                else: 0
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      data: {
+        stats
+      }
+    });
+  }
+);
+
+exports.getTourDifficultyStats = asyncWrapper( 
   async (req, res, next) => {
     const stats = await Tour.aggregate([
       {
