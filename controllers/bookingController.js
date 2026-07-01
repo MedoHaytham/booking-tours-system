@@ -12,6 +12,32 @@ exports.getBooking = factory.getOne(Booking);
 exports.updateBooking = factory.updateOne(Booking);
 exports.deleteBooking = factory.deleteOne(Booking);
 
+exports.getBookingsStats = asyncWrapper(async (req, res, next) => {
+  const stats = await Booking.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalBookings: { $sum: 1 },
+        totalRevenue: { $sum: { $cond: [{ $eq: ['$paid', true] }, '$price', 0] } },
+        paidBookings: { $sum: { $cond: [{ $eq: ['$paid', true] }, 1, 0] } },
+        unpaidBookings: { $sum: { $cond: [{ $eq: ['$paid', false] }, 1, 0] } }
+      }
+    }
+  ]);
+
+  const result = stats[0] || {
+    totalBookings: 0,
+    totalRevenue: 0,
+    paidBookings: 0,
+    unpaidBookings: 0
+  };
+
+  res.status(200).json({
+    status: httpStatus.SUCCESS,
+    data: result
+  });
+});
+
 
 exports.getMyTours = asyncWrapper(
   async (req, res, next) => {

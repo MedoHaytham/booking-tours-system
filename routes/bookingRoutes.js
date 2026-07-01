@@ -13,6 +13,8 @@ router.get('/my-tours', bookingController.getMyTours);
 
 router.use(allowedTo(USER_ROLES.ADMIN));
 
+router.get('/booking-stats', bookingController.getBookingsStats);
+
 router.route('/')
   .get(bookingController.getAllBookings);
 
