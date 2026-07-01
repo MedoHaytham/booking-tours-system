@@ -45,7 +45,9 @@ router.route('/')
   .get(tourController.getAllTours)
   .post(
     verifyToken, 
-    allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE), 
+    allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE),
+    tourController.uploadTourImages,
+    tourController.resizeTourImages,
     tourController.createTour
   );
 
