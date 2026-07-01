@@ -11,9 +11,11 @@ exports.getAll = (Model, searchFields = []) => asyncWrapper(
     if (req.params.tourId) filter = { tour: req.params.tourId };
     if (req.params.userId) filter = { user: req.params.userId };
 
-    const features = new APIfeatures(Model.find(filter), req.query);
-    await features.search(searchFields);
-    features.filter().sort().limitFields();
+    const features = new APIfeatures(Model.find(filter), req.query)
+      .search(searchFields)
+      .filter()
+      .sort()
+      .limitFields();
 
     // To get total number of documents
     const total = await Model.countDocuments(features.query.getFilter());
