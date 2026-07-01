@@ -155,6 +155,49 @@ exports.createTour = asyncWrapper(
 exports.updateTour = factory.updateOne(Tour);
 exports.deleteTour = factory.deleteOne(Tour);
 
+exports.addStartDate = asyncWrapper(
+  async (req, res, next) => {
+    // get tour id from the url
+    const { id } = req.params;
+    
+    // get start date from the body
+    const { startDate } = req.body;
+    
+    const tour = await Tour.findById(id);
+    if (!tour) {
+      return next(new AppError('Tour not found', 404));
+    }
+
+    const now = new Date();
+    const newStartDate = new Date(startDate);
+
+    // check if the new start date is before now
+    if (newStartDate < now) {
+      return next(new AppError('Start date must be in the future', 400));
+    }
+
+    // check if the new start date is already exists
+    if ( tour.startDates.some(date => date.startDate.toISOString() === newStartDate.toISOString()) ) {
+      return next(new AppError('Start date already exists', 400));
+    }
+
+
+    // remove Passed Dates
+    tour.startDates = tour.startDates.filter(date => date.startDate > now);
+
+    // push the new start date
+    tour.startDates.push({ startDate });
+    await tour.save();
+
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      data: {
+        tour,
+      }
+    });
+  }
+);
+
 exports.getTourBySlug = asyncWrapper(
   async (req, res, next) => {
     const { slug } = req.params;

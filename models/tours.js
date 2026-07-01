@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-// const validator = require('validator');
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -11,18 +10,21 @@ const tourSchema = new mongoose.Schema({
     trim: true,
     minlength: [10, 'a tour must have a name at least 10 characters long'],
     maxlength: [40, 'a tour must have a name at most 40 characters long'],
-    // validate: [validator.isAlpha, 'tour name must contain only characters']
   },
   slug: {
     type: String,
   },
   duration: {
     type: Number,
-    required: [true, 'tour must have a duration']
+    required: [true, 'tour must have a duration'],
+    min: [ 1, 'duration must be at least 1 day' ],
+    max: [ 100, 'duration must be at most 100 days'],
   },
   maxGroupSize: {
     type: Number,
-    required: [true, 'tour must have a max group size']
+    required: [true, 'tour must have a max group size'],
+    min: [ 1, 'maxGroupSize must be above 1'],
+    max: [ 25, 'maxGroupSize must be below 25']
   },
   difficulty: {
     type: String,
@@ -60,41 +62,59 @@ const tourSchema = new mongoose.Schema({
   summary: {
     type: String,
     trim: true,
-    required: [true, 'tour must have a summary']
+    required: [true, 'tour must have a summary'],
+    minlength: [10, 'a tour must have a summary at least 10 characters long'],
+    maxlength: [100, 'a tour must have a summary at most 100 characters long'],
   },
   description: {
     type: String,
     trim: true,
-    required: [true, 'tour must have a description']
+    required: [true, 'tour must have a description'],
+    minlength: [10, 'a tour must have a description at least 10 characters long'],
+    maxlength: [1000, 'a tour must have a description at most 1000 characters long'],
   },
   imageCover: {
     type: String,
-    required: [true, 'tour must have an image cover'],
+    default: 'default.jpg'
   },
   images: {
     type: [String],
+    default: ['default.jpg', 'default.jpg', 'default.jpg'],
+    validate: {
+      validator: function(val) {
+        return val.length <= 3;
+      },
+      message: 'Tour must have at most 3 images',
+    }
   },
   createdAt: {
     type: Date,
     default: Date.now(),
     select: false,
   },
-  startDates: [
-    {
-      startDate: {
-        type: Date,
-        required: [true, 'tour must have a start date']
+  startDates: {
+    type:[
+      {
+        startDate: {
+          type: Date,
+          required: [true, 'tour must have a start date']
+        },
+        participants: {
+          type: Number,
+          default: 0
+        },
+        soldOut: {
+          type: Boolean,
+          default: false
+        },
       },
-      participants: {
-        type: Number,
-        default: 0
-      },
-      soldOut: {
-        type: Boolean,
-        default: false
-      },
+    ],
+    validate: {
+      validator: (startDates) => Array.isArray(startDates) &&
+        startDates.length >= 1 && startDates.length <= 3,
+      message: 'Tour must have between 1 and 3 start dates.',
     }
-  ],
+  },
   secretTour: {
     type: Boolean,
     default: false,

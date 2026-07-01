@@ -51,20 +51,18 @@ router.route('/')
     tourController.createTour
   );
 
+
+router.use(verifyToken, allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE))
+
 router.route('/:id')
   .get(tourController.getTour)
-  .patch(
-    verifyToken, 
-    allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE), 
+  .post(tourController.addStartDate)
+  .patch( 
     tourController.uploadTourImages, 
     tourController.resizeTourImages, 
     tourController.updateTour
   )
-  .delete(
-    verifyToken, 
-    allowedTo(USER_ROLES.ADMIN, USER_ROLES.LEAD_GUIDE), 
-    tourController.deleteTour
-  );
+  .delete(tourController.deleteTour);
 
 
 module.exports = router;
