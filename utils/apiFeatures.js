@@ -57,19 +57,13 @@ class APIfeatures {
 
   search(fields = []) {
     if (!this.queryString.search || fields.length === 0) return this;
-
     const regex = new RegExp(this.queryString.search, 'i');
-
     const simpleConditions = fields
       .filter(f => !f.includes('.'))
       .map(f => ({ [f]: regex }));
-
-    const refFields = fields.filter(f => f.includes('.'));
-
     if (simpleConditions.length > 0) {
       this.query = this.query.find({ $or: simpleConditions });
     }
-    
     return this;
   }
 }

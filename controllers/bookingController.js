@@ -6,8 +6,53 @@ const User = require('../models/users');
 const httpStatus = require('../utils/httpStatusText');
 const factory = require('./handlerFactory');
 const AppError = require('../utils/appError');
+const APIfeatures = require('../utils/apiFeatures');
 
-exports.getAllBookings = factory.getAll(Booking, ['sessionId', 'tour.name', 'user.name', 'user.email']);
+exports.getAllBookings = asyncWrapper(
+  async (req, res, next) => {
+    const filter = {};
+
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+
+      const [matchingUsers, matchingTours] = await Promise.all([
+        User.find({ $or: [{ name: searchRegex }, { email: searchRegex }] })
+            .select('_id').limit(500),
+        Tour.find({ name: searchRegex })
+            .select('_id').limit(500)
+      ]);
+
+      const userIds = matchingUsers.map(u => u._id);
+      const tourIds = matchingTours.map(t => t._id);
+
+      filter.$or = [
+        { user: { $in: userIds } },
+        { tour: { $in: tourIds } },
+        { sessionId: searchRegex }
+      ];
+    }
+
+    const features = new APIfeatures(Booking.find(filter), req.query)
+      .filter()
+      .sort()
+      .limitFields();
+
+    const total = await Booking.countDocuments(features.query.getFilter());
+
+    features.paginate();
+    const doc = await features.query;
+
+    res.status(200).json({
+      status: httpStatus.SUCCESS,
+      total,
+      results: doc.length,
+      data: {
+        data: doc
+      }
+    });
+  }
+);
+
 exports.getBooking = factory.getOne(Booking);
 exports.updateBooking = factory.updateOne(Booking);
 exports.deleteBooking = factory.deleteOne(Booking);
