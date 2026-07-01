@@ -127,7 +127,11 @@ const tourSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     }
-  ]
+  ],
+  available: {
+    type: Boolean,
+    default: true
+  }
 }, 
 { 
   toJSON: { virtuals: true },
@@ -143,11 +147,11 @@ tourSchema.virtual('durationWeeks').get(function() {
   return this.duration / 7;
 });
 
-tourSchema.virtual('available').get(function() {
-  if (!this.startDates || this.startDates.length === 0) return false;
-  const now = new Date();
-  return this.startDates.some(date => !date.soldOut && date.startDate > now);
-});
+// tourSchema.virtual('available').get(function() {
+//   if (!this.startDates || this.startDates.length === 0) return false;
+//   const now = new Date();
+//   return this.startDates.some(date => !date.soldOut && date.startDate > now);
+// });
 
 tourSchema.virtual('reviews', {
   ref: 'Review',
@@ -158,6 +162,14 @@ tourSchema.virtual('reviews', {
 // Document middleware: run before .save() and .create() not update
 tourSchema.pre('save', function() {
   this.slug = slugify(this.name, { lower: true });
+});
+
+tourSchema.pre('save', function() {
+  if (this.startDates && this.startDates.length > 0) {
+    this.available = this.startDates.some(date => !date.soldOut && date.startDate > new Date());
+  } else {
+    this.available = false;
+  }
 });
 
 // tourSchema.pre('save', () => {
