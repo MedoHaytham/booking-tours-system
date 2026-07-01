@@ -7,7 +7,7 @@ const httpStatus = require('../utils/httpStatusText');
 const factory = require('./handlerFactory');
 const AppError = require('../utils/appError');
 
-exports.getAllBookings = factory.getAll(Booking);
+exports.getAllBookings = factory.getAll(Booking, ['sessionId', 'tour.name', 'user.name', 'user.email']);
 exports.getBooking = factory.getOne(Booking);
 exports.updateBooking = factory.updateOne(Booking);
 exports.deleteBooking = factory.deleteOne(Booking);

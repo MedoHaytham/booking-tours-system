@@ -55,12 +55,39 @@ class APIfeatures {
     return this;
   }
 
-  search(fields = []) {
+  async search(fields = []) {
     if (this.queryString.search && fields.length > 0) {
       const regex = new RegExp(this.queryString.search, 'i');
-      this.query = this.query.find({
-        $or: fields.map(field => ({ [field]: regex }))
+
+      const promises = fields.map(async (field) => {
+        if (field.includes('.')) {
+          const [refPath, refField] = field.split('.');
+          const Model = this.query.model;
+          const schemaPath = Model.schema.path(refPath);
+
+          if (schemaPath && schemaPath.options && schemaPath.options.ref) {
+            const refModelName = schemaPath.options.ref;
+            const RefModel = Model.db.model(refModelName);
+
+            const matchingDocs = await RefModel.find({
+              [refField]: regex
+            }).select('_id');
+
+            const ids = matchingDocs.map(d => d._id);
+            return { [refPath]: { $in: ids } };
+          }
+          return null;
+        }
+
+        return { [field]: regex };
       });
+
+      const conditions = await Promise.all(promises);
+      const orConditions = conditions.filter(Boolean);
+
+      if (orConditions.length > 0) {
+        this.query = this.query.find({ $or: orConditions });
+      }
     }
     return this;
   }
