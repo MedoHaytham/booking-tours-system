@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
     select: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 },{
   toJSON: {virtuals: true},
