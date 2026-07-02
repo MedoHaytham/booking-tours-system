@@ -142,7 +142,25 @@ const tourSchema = new mongoose.Schema({
       day: {
         type: Number,
         validate: {
-          validator: (day) => day >= 1 && day <= this.duration,
+          validator: function(day) {
+            // Check if "this" is the Query object (for updates)
+            if (typeof this.parent !== 'function') {
+              if (typeof this.getUpdate === 'function') {
+                const update = this.getUpdate();
+                const duration = update.duration || (update.$set && update.$set.duration);
+                if (duration !== undefined) {
+                  return day >= 1 && day <= duration;
+                }
+              }
+              return true; // Skip if duration cannot be determined in query context
+            }
+            // For document validations (save/create)
+            const parent = this.parent();
+            if (parent && parent.duration) {
+              return day >= 1 && day <= parent.duration;
+            }
+            return true;
+          },
           message: 'day must be between 1 and duration',
         }
       },
