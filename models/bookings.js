@@ -39,7 +39,7 @@ bookingSchema.index({ tour: 1, user: 1 });
 
 // Query middleware
 bookingSchema.pre(/^find/, function(){
-  this.populate('user').populate('tour', 'name');
+  this.populate('user').populate('tour', 'name slug');
 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
