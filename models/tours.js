@@ -139,7 +139,13 @@ const tourSchema = new mongoose.Schema({
       coordinates: [Number],
       address: String,
       description: String,
-      day: Number,
+      day: {
+        type: Number,
+        validate: {
+          validator: (day) => day >= 1 && day <= this.duration,
+          message: 'day must be between 1 and duration',
+        }
+      },
     }
   ],
   guides: [
