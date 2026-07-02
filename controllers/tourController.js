@@ -185,6 +185,9 @@ exports.addStartDate = asyncWrapper(
     // remove Passed Dates
     tour.startDates = tour.startDates.filter(date => date.startDate > now);
 
+    // remove Soldout Dates
+    tour.startDates = tour.startDates.filter(date => !date.soldOut);
+
     // push the new start date
     tour.startDates.push({ startDate });
     await tour.save();
