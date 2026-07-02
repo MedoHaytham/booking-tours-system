@@ -184,10 +184,6 @@ exports.addStartDate = asyncWrapper(
 
     // check if the new start date is already exists
     if ( tour.startDates.some(date => date.startDate.toISOString() === newStartDate.toISOString()) ) {
-      // remove Passed Dates
-      tour.startDates = tour.startDates.filter(date => date.startDate > now);
-      // remove Soldout Dates
-      tour.startDates = tour.startDates.filter(date => !date.soldOut);
       return next(new AppError('Start date already exists', 400));
     }
 
