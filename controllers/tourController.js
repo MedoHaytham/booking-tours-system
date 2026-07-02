@@ -176,17 +176,16 @@ exports.addStartDate = asyncWrapper(
       return next(new AppError('Start date must be in the future', 400));
     }
 
-    // check if the new start date is already exists
-    if ( tour.startDates.some(date => date.startDate.toISOString() === newStartDate.toISOString()) ) {
-      return next(new AppError('Start date already exists', 400));
-    }
-
-
     // remove Passed Dates
     tour.startDates = tour.startDates.filter(date => date.startDate > now);
 
     // remove Soldout Dates
     tour.startDates = tour.startDates.filter(date => !date.soldOut);
+
+    // check if the new start date is already exists
+    if ( tour.startDates.some(date => date.startDate.toISOString() === newStartDate.toISOString()) ) {
+      return next(new AppError('Start date already exists', 400));
+    }
 
     // push the new start date
     tour.startDates.push({ startDate });
