@@ -74,7 +74,7 @@ exports.updateOne = Model => asyncWrapper(
   async (req, res, next) => {
     const { id } = req.params;
 
-    const doc = await Model.findByIdAndUpdate(id,  req.body, {
+    const doc = await Model.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true
     });

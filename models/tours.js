@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const AppError = require('../utils/appError');
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -49,15 +50,26 @@ const tourSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'tour must have a price']
   },
+  discountPercentage: {
+    type: Number,
+    min: [0, 'Discount percentage cannot be negative'],
+    max: [100, 'Discount percentage ({VALUE}) should be below or equal 100%']
+  },
   priceDiscount: {
     type: Number,
     validate: {
       validator: function(val) {
         // this only points to the current document on new document creation and not when updating
-        return val < this.price;
+        if (this.price !== undefined) {
+          return val < this.price;
+        }
+        return true;
       },
       message: 'Discount price ({VALUE}) should be below than regular price',
     }
+  },
+  discountUntil: {
+    type: Date,
   },
   summary: {
     type: String,
@@ -193,6 +205,11 @@ tourSchema.virtual('available').get(function() {
   return this.startDates.some(date => !date.soldOut && date.startDate > now);
 });
 
+tourSchema.virtual('isDiscountActive').get(function() {
+  if (!this.priceDiscount || !this.discountUntil) return false;
+  return this.discountUntil > Date.now();
+});
+
 tourSchema.virtual('reviews', {
   ref: 'Review',
   foreignField: 'tour',
@@ -209,6 +226,20 @@ tourSchema.pre('save', function() {
   this.startDates.forEach(date => {
     if (date.startDate < now) date.soldOut = true;
   });
+});
+
+tourSchema.pre('save', function() {
+  if (this.discountPercentage) {
+    if (!this.discountUntil) {
+      throw new AppError('discountUntil is required when discountPercentage is set', 400);
+    }
+    this.priceDiscount = Math.round(
+      this.price * ( 1 - this.discountPercentage / 100)
+    );
+  }else {
+    this.priceDiscount = undefined;
+    this.discountUntil = undefined;
+  }
 });
 
 // tourSchema.pre('save', () => {
@@ -230,6 +261,32 @@ tourSchema.pre(/^find/, function() {
       path: 'guides', 
       select: '-__v -passwordChangedAt'
     });
+});
+
+tourSchema.pre('findOneAndUpdate', async function() {
+  const update = this.getUpdate();
+
+  if (update.discountPercentage === undefined) return;
+
+  const docToUpdate = await this.model.findOne(this.getQuery());
+  const price = update.price ?? docToUpdate.price;
+
+  if (update.discountPercentage) {
+    if (update.discountPercentage > 100) {
+      throw new AppError('Discount percentage should be below or equal 100%', 400)
+    }
+    const discountUntil = update.discountUntil ?? docToUpdate.discountUntil;
+    if (!discountUntil) {
+      throw new AppError('discountUntil is required when discountPercentage is set', 400)
+    }
+
+    update.priceDiscount = Math.round(
+      price * ( 1 - update.discountPercentage / 100 )
+    );
+  } else {
+    update.priceDiscount = undefined;
+    update.discountUntil = undefined;
+  }
 });
 
 // tourSchema.post(/^find/, function() {
