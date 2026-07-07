@@ -46,7 +46,7 @@ exports.signup = asyncWrapper(
     // 2) send confirm email
     const confirmationToken = newUser.createEmailConfirmationToken();
     await newUser.save({ validateBeforeSave: false });
-    const confirmUrl = `${req.protocol}://${req.get('host')}/api/v1/users/confirmEmail/${confirmationToken}`;
+    const confirmUrl = `${process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`}/confirmEmail/${confirmationToken}`;
     try {
       await new Email(newUser, confirmUrl).sendConfirmEmail();
     } catch (err) {
@@ -141,7 +141,7 @@ exports.forgotPassword = asyncWrapper(
 
     // 3) Send it to user's email
     try {
-      const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
+      const resetUrl = `${process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`}/resetPassword/${resetToken}`;
 
       await new Email(user, resetUrl).sendResetPassword();
 
