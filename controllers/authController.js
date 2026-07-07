@@ -43,16 +43,52 @@ exports.signup = asyncWrapper(
       passwordConfirm: req.body.passwordConfirm
     });
 
-    // 2) send welcome email
+    // 2) send confirm email
+    const confirmationToken = newUser.createEmailConfirmationToken();
+    await newUser.save({ validateBeforeSave: false });
+    const confirmUrl = `${req.protocol}://${req.get('host')}/api/v1/users/confirmEmail/${confirmationToken}`;
+    try {
+      await new Email(newUser, confirmUrl).sendConfirmEmail();
+    } catch (err) {
+      console.error('SendGrid confirmation email error:', err.message);
+      console.error('SendGrid full error:', err);
+    }
+
+    res.status(201).json({
+      status: httpStatus.SUCCESS,
+      message: 'Account created successfully. Please verify your email.'
+    });
+  }
+);
+
+exports.confirmEmail = asyncWrapper(
+  async (req, res, next) => {
+    const { confirmationToken } = req.params;
+    const hashedToken = crypto.createHash('sha256').update(confirmationToken).digest('hex');
+    const user = await User.findOne({ 
+      emailConfirmationToken: hashedToken,
+      emailConfirmationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return next(new AppError('Invalid or expired confirmation token', 400));
+    }
+
+    user.emailConfirmed = true;
+    user.emailConfirmationToken = undefined;
+    user.emailConfirmationExpires = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
     const url = `${process.env.FRONTEND_URL}/me`;
     try {
-      await new Email(newUser, url).sendWelcome();
+      await new Email(user, url).sendWelcome();
     } catch (err) {
       console.error('SendGrid welcome email error:', err.message);
       console.error('SendGrid full error:', err);
     }
-    
-    createSendToken(newUser, 201, req, res);
+
+    createSendToken(user, 200, req, res);
   }
 );
 
@@ -66,7 +102,7 @@ exports.login = asyncWrapper (
     };
 
     // check if user exists with this email
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password +emailConfirmed');
 
     if( !user ) {
       return next(new AppError('Invalid email or password', 401));
@@ -78,6 +114,11 @@ exports.login = asyncWrapper (
     if( !correct ) {
       return next(new AppError('Invalid email or password', 401));
     };
+
+    // check if email is verified
+    if (!user.emailConfirmed) {
+      return next(new AppError('Please verify your email before logging in', 403));
+    }
 
     // if everything is ok, creat token and send it
     createSendToken(user, 200, req, res);
