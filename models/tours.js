@@ -70,6 +70,13 @@ const tourSchema = new mongoose.Schema({
   },
   discountUntil: {
     type: Date,
+    validate: {
+      validator: function(val) {
+        if (!val) return true;
+        return val > Date.now();
+      },
+      message: 'discountUntil must be a future date',
+    }
   },
   summary: {
     type: String,
@@ -233,6 +240,9 @@ tourSchema.pre('save', function() {
     if (!this.discountUntil) {
       throw new AppError('discountUntil is required when discountPercentage is set', 400);
     }
+    if (this.discountUntil <= Date.now()) {
+      throw new AppError('discountUntil must be a future date', 400);
+    }
     this.priceDiscount = Math.round(
       this.price * ( 1 - this.discountPercentage / 100)
     );
@@ -278,6 +288,9 @@ tourSchema.pre('findOneAndUpdate', async function() {
     const discountUntil = update.discountUntil ?? docToUpdate.discountUntil;
     if (!discountUntil) {
       throw new AppError('discountUntil is required when discountPercentage is set', 400)
+    }
+    if (new Date(discountUntil) <= Date.now()) {
+      throw new AppError('discountUntil must be a future date', 400);
     }
 
     update.priceDiscount = Math.round(
