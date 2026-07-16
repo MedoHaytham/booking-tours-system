@@ -33,6 +33,8 @@ router.get('/auth/google/callback',
   authController.googleCallback
 );
 
+router.post('/auth/exchange', authController.exchangeToken);
+
 // protected routes
 router.use(verifyToken);
 

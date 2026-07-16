@@ -40,6 +40,25 @@ exports.googleCallback = asyncWrapper(
   }
 );
 
+exports.exchangeToken = asyncWrapper(
+  async (req, res, next) => {
+    const { token } = req.body;
+    if (!token) return next(new AppError('No token provided', 400));
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return next(new AppError('Invalid or expired token', 401));
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) return next(new AppError('User no longer exists', 401));
+
+    createSendToken(user, 200, req, res);
+  }
+);
+
 exports.signup = asyncWrapper(
   async (req, res, next) => {
     // 1) create new user
