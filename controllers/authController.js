@@ -133,6 +133,10 @@ exports.login = asyncWrapper (
     if( !user ) {
       return next(new AppError('Invalid email or password', 401));
     };
+
+    if (!user.password) {
+      return next(new AppError('This account uses Google Sign-In. Please log in with Google.', 401));
+    }
     
     // check if the password is correct
     const correct = await user.correctPassword(password, user.password);
