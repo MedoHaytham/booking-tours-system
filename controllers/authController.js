@@ -42,7 +42,7 @@ exports.googleCallback = asyncWrapper(
       ),
       httpOnly: true,
       secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
-      sameSite: 'lax'
+      sameSite: 'lax',
     });
     
     res.redirect(`${process.env.FRONTEND_URL}/auth/success`);
