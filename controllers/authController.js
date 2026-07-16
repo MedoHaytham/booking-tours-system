@@ -35,11 +35,15 @@ const createSendToken = (user, statusCode, req, res) => {
 
 exports.googleCallback = asyncWrapper(
   async (req, res, next) => {
-    const token = signToken(req.user._id);
-    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
+    const exchangeToken = jwt.sign(
+      { id: req.user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '2m' }
+    );
+
+    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${exchangeToken}`);
   }
 );
-
 exports.exchangeToken = asyncWrapper(
   async (req, res, next) => {
     const { token } = req.body;
