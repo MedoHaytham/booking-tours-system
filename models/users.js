@@ -27,16 +27,26 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'lead-guide', 'guide', 'user'],
     default: 'user'
   },
+  googleId: {
+    type: String,
+    select: false
+  },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
+    required: [
+      function() { return !this.googleId; },
+      'Please provide a password'
+    ],
     minlength: [8, 'a password must be at least 8 characters long'],
     trim: true,
     select: false
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'Please provide a password confirm'],
+    required: [
+      function () { return !this.googleId; },
+      'Please provide a password confirm'
+    ],
     trim: true,
     // This only works on save() and create() documents not updates
     validate: {
@@ -76,7 +86,7 @@ const userSchema = new mongoose.Schema({
 
 // hashing password
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+  if (!this.isModified('password') || !this.password) return;
 
   // hash the password
   this.password = await bcrypt.hash(this.password, 12);

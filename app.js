@@ -12,6 +12,7 @@ const cors = require('cors');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorControler');
+const passport = require('./config/passport');
 
 const toursRouter = require('./routes/tourRoutes');
 const usersRouter = require('./routes/userRoutes');
@@ -35,6 +36,8 @@ app.options('*', cors());
 
 // serving static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(passport.initialize());
 
 // set security headers
 // app.use(helmet());

@@ -1,4 +1,5 @@
 const express = require('express');
+const passport = require('../config/passport');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 const { verifyToken } = require('../middleware/verifyToken');
@@ -16,6 +17,21 @@ router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:resetToken', authController.resetPassword);
 router.get('/confirmEmail/:confirmationToken', authController.confirmEmail);
 router.get('/logout', authController.logout);
+
+router.get('/auth/google', 
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false
+  })
+);
+
+router.get('/auth/google/callback', 
+  passport.authenticate('google', { 
+    session: false, 
+    failureRedirect: `${process.env.FRONTEND_URL}/login` 
+  }),
+  authController.googleCallback
+);
 
 // protected routes
 router.use(verifyToken);
