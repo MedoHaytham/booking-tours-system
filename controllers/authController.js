@@ -36,16 +36,7 @@ const createSendToken = (user, statusCode, req, res) => {
 exports.googleCallback = asyncWrapper(
   async (req, res, next) => {
     const token = signToken(req.user._id);
-    res.cookie('jwt', token, {
-      expires: new Date( 
-        Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
-      sameSite: 'lax',
-    });
-    
-    res.redirect(`${process.env.FRONTEND_URL}/auth/success`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
   }
 );
 
