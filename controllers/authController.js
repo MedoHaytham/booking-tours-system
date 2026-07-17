@@ -7,18 +7,43 @@ const asyncWrapper = require('../utils/asyncWrapper');
 const Email = require('../utils/email');
 const httpStatus = require('../utils/httpStatusText');
 
-const signToken = id => jwt.sign({ id }, process.env.JWT_SECRET, {
-  expiresIn: process.env.JWT_EXPIRES_IN
-});
+const signToken = (id, type) => {
+  if (type === 'refresh') {
+    return jwt.sign({ id }, process.env.REFRESH_TOKEN_SECRET_KEY, {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN
+    });
+  }
 
-const createSendToken = (user, statusCode, req, res) => {
-  const token = signToken(user._id);
-  res.cookie('jwt', token, {
-    expires: new Date( 
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+  if (type === 'access') {
+    return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET_KEY, {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN
+    });
+  }
+};
+
+const createSendToken = async (user, statusCode, req, res) => {
+  const refreshToken = signToken(user._id, 'refresh');
+  const accessToken = signToken(user._id, 'access');
+
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  res.cookie('accessToken', accessToken, {
+    expires: new Date(
+      Date.now() + 15 * 60 * 1000
     ),
     httpOnly: true,
-    secure: req.secure || req.headers['x-forwarded-proto'] === 'https'
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: 'lax',
+  });
+
+  res.cookie('refreshToken', refreshToken, {
+    expires: new Date( 
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: 'lax',
   });
 
   // remove the password from response
@@ -26,7 +51,6 @@ const createSendToken = (user, statusCode, req, res) => {
     
   res.status(statusCode).json({
     status: httpStatus.SUCCESS,
-    token,
     data: {
       user
     }
@@ -37,13 +61,14 @@ exports.googleCallback = asyncWrapper(
   async (req, res, next) => {
     const exchangeToken = jwt.sign(
       { id: req.user._id },
-      process.env.JWT_SECRET,
+      process.env.EXCHANGE_TOKEN_SECRET,
       { expiresIn: '2m' }
     );
 
     res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${exchangeToken}`);
   }
 );
+
 exports.exchangeToken = asyncWrapper(
   async (req, res, next) => {
     const { token } = req.body;
@@ -51,7 +76,7 @@ exports.exchangeToken = asyncWrapper(
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, process.env.EXCHANGE_TOKEN_SECRET);
     } catch (err) {
       return next(new AppError('Invalid or expired token', 401));
     }
@@ -59,7 +84,7 @@ exports.exchangeToken = asyncWrapper(
     const user = await User.findById(decoded.id);
     if (!user) return next(new AppError('User no longer exists', 401));
 
-    createSendToken(user, 200, req, res);
+    await createSendToken(user, 200, req, res);
   }
 );
 
@@ -118,7 +143,7 @@ exports.confirmEmail = asyncWrapper(
       console.error('SendGrid full error:', err);
     }
 
-    createSendToken(user, 200, req, res);
+    await createSendToken(user, 200, req, res);
   }
 );
 
@@ -155,7 +180,34 @@ exports.login = asyncWrapper (
     }
 
     // if everything is ok, creat token and send it
-    createSendToken(user, 200, req, res);
+    await createSendToken(user, 200, req, res);
+  }
+);
+
+exports.refreshAccessToken = asyncWrapper(
+  async (req, res, next) => {
+    const token = req.cookies.refreshToken;
+    
+    if( !token ) {
+      return next(new AppError('No refresh token provided', 401));
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET_KEY);
+    } catch (error){
+      return next(new AppError('Invalid or expired refresh token', 401));
+    };
+
+    const user = await User.findById(decoded.id).select('+refreshToken');
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    if(!user || user.refreshToken !== hashedToken){
+      return next(new AppError('Invalid or expired refresh token', 401));
+    }
+
+    await createSendToken(user, 200, req, res);
   }
 );
 
@@ -218,7 +270,7 @@ exports.resetPassword = asyncWrapper(
     await user.save();
 
     // 3) log user in and send JWT
-    createSendToken(user, 200, req, res);
+    await createSendToken(user, 200, req, res);
   }
 );
 
@@ -247,20 +299,26 @@ exports.updatePassword = asyncWrapper(
     await user.save();
 
     // 4) log user in, send JWT
-    createSendToken(user, 200, req, res);
+    await createSendToken(user, 200, req, res);
   }
 );
 
-exports.logout = asyncWrapper (
-  async (req, res, next) => {
-    res.cookie('jwt', 'loggedout', {
-      expires: new Date(
-        Date.now() + 10 * 1000
-      )
-    });
-
-    res.status(200).json({
-      status: httpStatus.SUCCESS
-    })
+exports.logout = asyncWrapper(async (req, res, next) => {
+  if (req.currentUser) {
+    await User.findByIdAndUpdate(req.currentUser._id, { refreshToken: undefined });
   }
-);
+
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: 'lax',
+  });
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: 'lax',
+  });
+
+  res.status(200).json({ status: httpStatus.SUCCESS });
+});

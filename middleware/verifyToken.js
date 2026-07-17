@@ -13,8 +13,8 @@ exports.verifyToken = asyncWrapper(
     let token;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];
-    } else if (req.cookies && req.cookies.jwt) {
-      token = req.cookies.jwt;
+    } else if (req.cookies && req.cookies.accessToken) {
+      token = req.cookies.accessToken;
     }    
   
     if ( !token ) {
@@ -22,7 +22,7 @@ exports.verifyToken = asyncWrapper(
     };
 
     // 2) verify token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const decoded = await promisify(jwt.verify)(token, process.env.ACCESS_TOKEN_SECRET_KEY);
 
     // 3) check if user is not exist 
     const currentUser = await User.findById(decoded.id);

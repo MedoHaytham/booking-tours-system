@@ -70,6 +70,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
     select: false
+  },
+  refreshToken: {
+    type: String,
+    select: false
   }
 },{
   timestamps: true,
@@ -88,9 +92,15 @@ const userSchema = new mongoose.Schema({
 userSchema.pre('save', async function () {
   if (!this.isModified('password') || !this.password) return;
 
-  // hash the password
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined;
+});
+
+// hash the refresh token
+userSchema.pre('save', function () {
+  if (!this.isModified('refreshToken') || !this.refreshToken) return;
+
+  this.refreshToken = crypto.createHash('sha256').update(this.refreshToken).digest('hex');
 });
 
 // update changedPasswordAt if password was changed

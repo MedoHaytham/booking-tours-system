@@ -13,10 +13,11 @@ const router = express.Router();
 // public routes
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
+router.post('/refreshToken', authController.refreshAccessToken);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:resetToken', authController.resetPassword);
 router.get('/confirmEmail/:confirmationToken', authController.confirmEmail);
-router.get('/logout', authController.logout);
+router.post('/logout', authController.logout);
 
 router.get('/auth/google', 
   passport.authenticate('google', {
@@ -28,7 +29,7 @@ router.get('/auth/google',
 router.get('/auth/google/callback', 
   passport.authenticate('google', { 
     session: false, 
-    failureRedirect: `${process.env.FRONTEND_URL}/login` 
+    failureRedirect: `${process.env.FRONTEND_URL}/login`
   }),
   authController.googleCallback
 );
