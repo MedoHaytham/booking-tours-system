@@ -18,7 +18,7 @@ const favoritesSchema = new mongoose.Schema({
 });
 
 favoritesSchema.pre(/^find/, function () {
-  this.populate('user').populate('tour', 'name slug');
+  this.populate('userId').populate('tourId', 'name slug');
 });
 
 const Favorites = mongoose.model('Favorites', favoritesSchema);
