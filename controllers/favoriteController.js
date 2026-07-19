@@ -27,11 +27,10 @@ exports.toggleFavorite = asyncWrapper(
 );
 
 exports.myFavorites = asyncWrapper(
-  async (req, res, next)=> {
-    const favorites = await Favorites.find({ userId: req.currentUser._id });
+  async (req, res, next) => {
+    const favorites = await Favorites.find({ userId: req.currentUser._id }).populate('tourId');
 
-    const tourIDs = favorites.map( favorite => favorite.tourId );
-    const tours = await Tour.find({ _id: { $in: tourIDs } });
+    const tours = favorites.map(favorite => favorite.tourId);
 
     res.status(200).json({
       status: httpStatus.SUCCESS,

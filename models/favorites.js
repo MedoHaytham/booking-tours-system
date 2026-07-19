@@ -17,6 +17,8 @@ const favoritesSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+favoritesSchema.index({ userId: 1, tourId: 1 }, { unique: true });
+
 favoritesSchema.pre(/^find/, function () {
   this.populate('userId').populate('tourId', 'name slug');
 });
