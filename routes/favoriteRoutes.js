@@ -11,7 +11,9 @@ router.use(verifyToken);
 router.use(allowedTo(USER_ROLES.USER));
 
 router.route('/')
-  .post(favoriteController.toggleFavorite)
   .get(favoriteController.myFavorites);
+
+router.route('/:tourId')
+  .post(favoriteController.toggleFavorite);
 
 module.exports = router;
