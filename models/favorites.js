@@ -19,9 +19,5 @@ const favoritesSchema = new mongoose.Schema({
 
 favoritesSchema.index({ userId: 1, tourId: 1 }, { unique: true });
 
-favoritesSchema.pre(/^find/, function () {
-  this.populate('userId').populate('tourId', 'name slug');
-});
-
 const Favorites = mongoose.model('Favorites', favoritesSchema);
 module.exports = Favorites;
