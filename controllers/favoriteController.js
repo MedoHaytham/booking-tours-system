@@ -1,6 +1,5 @@
 const asyncWrapper = require('../utils/asyncWrapper');
 const Favorites = require('../models/favorites');
-const Tour = require('../models/tours');
 const httpStatus = require('../utils/httpStatusText');
 
 exports.toggleFavorite = asyncWrapper(
