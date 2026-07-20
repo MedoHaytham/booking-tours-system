@@ -114,6 +114,13 @@ exports.getMyTours = asyncWrapper(
   }
 );
 
+const getEffectivePrice = (tour) => {
+  if (tour.priceDiscount && tour.isDiscountActive) {
+    return tour.priceDiscount;
+  }
+  return tour.price;
+};
+
 exports.getCheckoutSession = asyncWrapper(
   async(req, res, next) => {
 
@@ -147,6 +154,8 @@ exports.getCheckoutSession = asyncWrapper(
       return next(new AppError('You have already booked this tour', 400));
     }
 
+    const finalPrice = getEffectivePrice(tour);
+
     // 4) Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -155,12 +164,12 @@ exports.getCheckoutSession = asyncWrapper(
       cancel_url: `${process.env.FRONTEND_URL}/tour/${tour.slug}`,
       customer_email: req.currentUser.email,
       client_reference_id: req.params.tourId,
-      metadata: { dateId },
+      metadata: { dateId, finalPrice: finalPrice.toString() },
       line_items: [
         {
           price_data: {
             currency: 'usd',
-            unit_amount: tour.price * 100,
+            unit_amount: finalPrice * 100,
             product_data: {
               name: `${tour.name} Tour`,
               description: tour.summary,
@@ -206,7 +215,7 @@ const createBookingCheckout = async session => {
   if(exists) return ;
   
   const tourId = session.client_reference_id;
-  const { dateId } = session.metadata;
+  const { dateId, finalPrice } = session.metadata;
 
   const userDoc = await User.findOne({ email: session.customer_email });
   if (!userDoc) return;
@@ -216,29 +225,15 @@ const createBookingCheckout = async session => {
   if (!bookedDate) return;
 
   // increase the participants and update the soldOut field if participants reach the maxGroupSize
-  const newParticipants = bookedDate.participants + 1;
-  const isSoldOut = newParticipants >= tour.maxGroupSize;
+  bookedDate.participants += 1;
+  if (bookedDate.participants >= tour.maxGroupSize) bookedDate.soldOut = true;
+  await tour.save();
 
-  await Tour.findByIdAndUpdate(
-    tourId,
-    {
-      $set: {
-        'startDates.$[elem].participants': newParticipants,
-        'startDates.$[elem].soldOut': isSoldOut,
-      }
-    },
-    {
-      arrayFilters: [{ 'elem._id': bookedDate._id }],
-      new: true,
-      runValidators: false
-    }
-  );
-  
   await Booking.create({ 
     tour: tourId, 
     user: userDoc._id,
     date: bookedDate.startDate,
-    price: tour.price, 
+    price: Number(finalPrice), 
     sessionId: session.id
   });
 };

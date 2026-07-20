@@ -236,19 +236,21 @@ tourSchema.pre('save', function() {
 });
 
 tourSchema.pre('save', function() {
-  if (this.discountPercentage) {
-    if (!this.discountUntil) {
-      throw new AppError('discountUntil is required when discountPercentage is set', 400);
+  if (this.isModified('discountPercentage') || this.isModified('discountUntil')) {
+    if (this.discountPercentage) {
+      if (!this.discountUntil) {
+        throw new AppError('discountUntil is required when discountPercentage is set', 400);
+      }
+      if (this.discountUntil <= Date.now()) {
+        throw new AppError('discountUntil must be a future date', 400);
+      }
+      this.priceDiscount = Math.round(
+        this.price * (1 - this.discountPercentage / 100)
+      );
+    } else {
+      this.priceDiscount = undefined;
+      this.discountUntil = undefined;
     }
-    if (this.discountUntil <= Date.now()) {
-      throw new AppError('discountUntil must be a future date', 400);
-    }
-    this.priceDiscount = Math.round(
-      this.price * ( 1 - this.discountPercentage / 100)
-    );
-  }else {
-    this.priceDiscount = undefined;
-    this.discountUntil = undefined;
   }
 });
 
