@@ -216,9 +216,23 @@ const createBookingCheckout = async session => {
   if (!bookedDate) return;
 
   // increase the participants and update the soldOut field if participants reach the maxGroupSize
-  bookedDate.participants += 1;
-  if (bookedDate.participants >= tour.maxGroupSize) bookedDate.soldOut = true;
-  await tour.save({ validateBeforeSave: false });
+  const newParticipants = bookedDate.participants + 1;
+  const isSoldOut = newParticipants >= tour.maxGroupSize;
+
+  await Tour.findByIdAndUpdate(
+    tourId,
+    {
+      $set: {
+        'startDates.$[elem].participants': newParticipants,
+        'startDates.$[elem].soldOut': isSoldOut,
+      }
+    },
+    {
+      arrayFilters: [{ 'elem._id': bookedDate._id }],
+      new: true,
+      runValidators: false
+    }
+  );
   
   await Booking.create({ 
     tour: tourId, 
